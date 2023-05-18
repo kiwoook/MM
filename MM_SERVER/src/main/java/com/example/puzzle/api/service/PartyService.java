@@ -4,9 +4,12 @@ import com.example.puzzle.api.entity.party.Party;
 import com.example.puzzle.api.entity.user.User;
 import com.example.puzzle.api.repository.party.PartyRepository;
 import com.example.puzzle.api.repository.user.UserRepository;
+import com.example.puzzle.party.dto.PartyRequestDto;
+import com.example.puzzle.party.dto.PartyResponseDto;
 import com.example.puzzle.party.entity.OttType;
 import com.example.puzzle.party.entity.PartyStatus;
 import com.example.puzzle.party.entity.PartyUser;
+import com.example.puzzle.party.exception.PartyNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,29 +28,39 @@ public class PartyService {
     private final UserRepository userRepository;
 
     // OTT 파티 검색
-    public List<Party> searchParty(OttType ottType, LocalDate startDate, LocalDate endDate) {
+    public List<PartyResponseDto> searchParty(OttType ottType, LocalDate startDate, LocalDate endDate) {
         List<Party> parties = partyRepository.findByOttTypeAndStartDateGreaterThanEqualAndEndDateLessThanEqual(ottType, startDate, endDate);
 
         parties.addAll(partyRepository.findByOttTypeAndStartDateBetweenAndEndDateBetween(
                 ottType, startDate.minusMonths(1), startDate.plusMonths(1), endDate.minusMonths(1), endDate.plusMonths(1)));
-        // 적절한 파티를 찾지 못한다면 비슷한 구간의 파티를 찾음.
 
-        return parties.stream().filter(party -> party.getStatus() == PartyStatus.NOT_STARTED && !party.isFull())
+        // 적절한 파티를 찾지 못한다면 비슷한 구간의 파티를 찾음.
+        return parties.stream()
+                .filter(party -> party.getStatus() == PartyStatus.NOT_STARTED && !party.isFull())
+                .map(this::mapPartyToResponseDto)
                 .collect(Collectors.toList());
 
     }
 
     @Transactional
     //OTT 파티 생성
-    public Party createParty(OttType ottType, User creator, LocalDate startDate, LocalDate endDate) {
+    public PartyResponseDto createParty(PartyRequestDto requestDto, String userId) {
+        User partyCreator = userRepository.findByUserId(userId);
+        if (partyCreator == null) {
+            throw new RuntimeException("user not found");
+        }
         Party party = Party.builder()
-                .ottType(ottType)
-                .partyCreator(creator)
-                .startDate(startDate)
-                .endDate(endDate)
+                .ottType(requestDto.getOttType())
+                .partyCreator(partyCreator)
+                .startDate(requestDto.getStartDate())
+                .endDate(requestDto.getEndDate())
                 .build();
+        PartyResponseDto responseDto = PartyResponseDto.builder()
+                .party(party)
+                .build();
+
         partyRepository.save(party);
-        return party;
+        return responseDto;
     }
 
     @Transactional
@@ -58,17 +71,17 @@ public class PartyService {
             if (!party.isFull()) {
                 throw new RuntimeException("Party is Not full. Can't Progress");
             }
-            party.setStatus(status);
+            party.updateStatus(status);
         } else if (status == PartyStatus.COMPLETED) {
-            party.setStatus(status);
+            party.updateStatus(status);
         }
         partyRepository.save(party);
         return party;
     }
 
     @Transactional
-    public Party joinParty(String userId, Long partyId) {
-        Party party = partyRepository.findById(partyId).orElseThrow(() -> new RuntimeException("Party not found with id " + partyId));
+    public void joinParty(String userId, Long partyId) {
+        Party party = partyRepository.findById(partyId).orElseThrow(() -> new PartyNotFoundException("Party not found with id " + partyId));
         User user = userRepository.findByUserId(userId);
         if (user == null) {
             throw new RuntimeException("User not found with id " + userId);
@@ -92,7 +105,8 @@ public class PartyService {
         partyUser.setParty(party);
         party.getPartyUsers().add(partyUser);
         partyRepository.save(party);
-        return party;
+        userRepository.save(user);
+
     }
 
     @Transactional
@@ -115,4 +129,24 @@ public class PartyService {
 
         partyRepository.save(party);
     }
+
+    @Transactional
+    public boolean deleteParty(Long partyId, String userId) {
+        Party party = partyRepository.findById(partyId).orElseThrow(() -> new PartyNotFoundException("Party not found with ID : " + partyId));
+
+        User partyCreator = party.getPartyCreator();
+        if (partyCreator.getUserId().equals(userId)) {
+            partyRepository.delete(party);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private PartyResponseDto mapPartyToResponseDto(Party party) {
+
+        return PartyResponseDto.builder().party(party).build();
+    }
+
+
 }

@@ -17,19 +17,19 @@ public interface PartyRepository extends JpaRepository<Party, Long> {
     List<Party> findByOttTypeAndStartDateBetweenAndEndDateBetween(OttType ottType, LocalDate startDate1, LocalDate startDate2, LocalDate endDate1, LocalDate endDate2);
 
     List<Party> findByOttTypeAndStartDateGreaterThanEqualAndEndDateLessThanEqual(OttType ottType, LocalDate startDate, LocalDate endDate);
-    List<Party> findByStartDateGreaterThanEqualAndEndDateLessThanEqual(LocalDate startDate, LocalDate endDate);
-
-    List<Party> findByPartyUsersContains(PartyUser user);
-
-    List<Party> findByPartyUsersNotContains(PartyUser user);
-
-    List<Party> findByEndDateBefore(LocalDate currentDateTime);
-
-    List<Party> findByStartDateAfter(LocalDate currentDateTime);
-
-    List<Party> findByPartyUsersNotContaining(OttType ottType, LocalDate startDate, LocalDate endDate, User user);
-
-    boolean existsByPartyUsersNotContaining(OttType ottType, LocalDate startDate, LocalDate endDate, User user);
+//    List<Party> findByStartDateGreaterThanEqualAndEndDateLessThanEqual(LocalDate startDate, LocalDate endDate);
+//
+//    List<Party> findByPartyUsersContains(PartyUser user);
+//
+//    List<Party> findByPartyUsersNotContains(PartyUser user);
+//
+//    List<Party> findByEndDateBefore(LocalDate currentDateTime);
+//
+//    List<Party> findByStartDateAfter(LocalDate currentDateTime);
+//
+//    List<Party> findByPartyUsersNotContaining(OttType ottType, LocalDate startDate, LocalDate endDate, User user);
+//
+//    boolean existsByPartyUsersNotContaining(OttType ottType, LocalDate startDate, LocalDate endDate, User user);
 
 
 //    findByOttTypeAndPartyStartDateBetweenAndPartyEndDateBetween 메서드는 OttType과 두 개의 시간 정보를 입력받아 해당 기간에 생성된 OttType에 해당하는 파티 리스트를 반환합니다.

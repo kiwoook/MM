@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 
-@Setter
+
 @Getter
 @NoArgsConstructor
 @Entity
@@ -86,6 +86,10 @@ public class Party {
             return true;
         }
         return false;
+    }
+
+    public void updateStatus(PartyStatus status){
+        this.status = status;
     }
 
     public void removeUser(User user) {

@@ -12,7 +12,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // optional 클래스로 묶는 법 하기
 
-    Optional<User> findById(String userid);
-
 
 }
