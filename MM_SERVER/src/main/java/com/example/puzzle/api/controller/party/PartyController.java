@@ -7,7 +7,6 @@ import com.example.puzzle.party.entity.OttType;
 import com.example.puzzle.party.exception.PartyNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,9 +27,9 @@ public class PartyController {
     @GetMapping
     public ResponseEntity<List<PartyResponseDto>> getAllParties() {
         List<PartyResponseDto> parties = partyService.getAll();
-        if(parties.isEmpty()){
+        if (parties.isEmpty()) {
             return ResponseEntity.notFound().build();
-        }else{
+        } else {
             return ResponseEntity.status(HttpStatus.OK).body(parties);
         }
     }
@@ -43,7 +42,7 @@ public class PartyController {
         try {
             List<PartyResponseDto> parties = partyService.searchParty(ottType, startDate, endDate);
             return ResponseEntity.status(HttpStatus.OK).body(parties);
-        }catch (PartyNotFoundException e){
+        } catch (PartyNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -59,6 +58,16 @@ public class PartyController {
             return ResponseEntity.status(HttpStatus.CREATED).body(party);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    @GetMapping("/{partyId}")
+    public ResponseEntity<PartyResponseDto> getParty(@PathVariable Long partyId) {
+        try {
+            PartyResponseDto party = partyService.getParty(partyId);
+            return ResponseEntity.status(HttpStatus.OK).body(party);
+        } catch (PartyNotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 

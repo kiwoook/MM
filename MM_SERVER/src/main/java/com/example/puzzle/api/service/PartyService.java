@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +31,12 @@ public class PartyService {
     public List<PartyResponseDto> getAll() {
         List<Party> parties = partyRepository.findAll();
         return parties.stream().map(this::mapPartyToResponseDto).collect(Collectors.toList());
+    }
+
+    public PartyResponseDto getParty(Long partyId) {
+        Party party = partyRepository.findById(partyId).orElseThrow(() -> new PartyNotFoundException("Party not found with id " + partyId));
+
+        return PartyResponseDto.builder().party(party).build();
     }
 
     // OTT 파티 검색
