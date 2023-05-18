@@ -23,14 +23,16 @@ import java.util.List;
 @Slf4j
 public class PartyController {
 
-    @Value("${jwt.secret}")
-    private String secret;
-
     private final PartyService partyService;
 
     @GetMapping
-    public List<PartyResponseDto> getAllParties() {
-        return null;
+    public ResponseEntity<List<PartyResponseDto>> getAllParties() {
+        List<PartyResponseDto> parties = partyService.getAll();
+        if(parties.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }else{
+            return ResponseEntity.status(HttpStatus.OK).body(parties);
+        }
     }
 
     @GetMapping("/search")
@@ -38,10 +40,14 @@ public class PartyController {
             @RequestParam("ottType") OttType ottType,
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate endDate) {
-
-        List<PartyResponseDto> parties = partyService.searchParty(ottType, startDate, endDate);
+        try {
+            List<PartyResponseDto> parties = partyService.searchParty(ottType, startDate, endDate);
+            return ResponseEntity.status(HttpStatus.OK).body(parties);
+        }catch (PartyNotFoundException e){
+            return ResponseEntity.notFound().build();
+        }
     }
-    
+
 
     @PostMapping
     public ResponseEntity<PartyResponseDto> createParty(@RequestBody PartyRequestDto requestDto) {
@@ -54,8 +60,6 @@ public class PartyController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
-
     }
 
     @DeleteMapping("/{partyId}")

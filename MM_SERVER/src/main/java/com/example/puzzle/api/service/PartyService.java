@@ -27,18 +27,21 @@ public class PartyService {
     private final PartyRepository partyRepository;
     private final UserRepository userRepository;
 
+    public List<PartyResponseDto> getAll() {
+        List<Party> parties = partyRepository.findAll();
+        return parties.stream().map(this::mapPartyToResponseDto).collect(Collectors.toList());
+    }
+
     // OTT 파티 검색
     public List<PartyResponseDto> searchParty(OttType ottType, LocalDate startDate, LocalDate endDate) {
         List<Party> parties = partyRepository.findByOttTypeAndStartDateGreaterThanEqualAndEndDateLessThanEqual(ottType, startDate, endDate);
 
-        parties.addAll(partyRepository.findByOttTypeAndStartDateBetweenAndEndDateBetween(
-                ottType, startDate.minusMonths(1), startDate.plusMonths(1), endDate.minusMonths(1), endDate.plusMonths(1)));
-
         // 적절한 파티를 찾지 못한다면 비슷한 구간의 파티를 찾음.
-        return parties.stream()
-                .filter(party -> party.getStatus() == PartyStatus.NOT_STARTED && !party.isFull())
-                .map(this::mapPartyToResponseDto)
-                .collect(Collectors.toList());
+        parties.addAll(partyRepository.findByOttTypeAndStartDateBetweenAndEndDateBetween(ottType, startDate.minusMonths(1), startDate.plusMonths(1), endDate.minusMonths(1), endDate.plusMonths(1)));
+        if (parties.isEmpty()) {
+            throw new PartyNotFoundException("party not found");
+        }
+        return parties.stream().filter(party -> party.getStatus() == PartyStatus.NOT_STARTED && !party.isFull()).map(this::mapPartyToResponseDto).collect(Collectors.toList());
 
     }
 
@@ -49,15 +52,8 @@ public class PartyService {
         if (partyCreator == null) {
             throw new RuntimeException("user not found");
         }
-        Party party = Party.builder()
-                .ottType(requestDto.getOttType())
-                .partyCreator(partyCreator)
-                .startDate(requestDto.getStartDate())
-                .endDate(requestDto.getEndDate())
-                .build();
-        PartyResponseDto responseDto = PartyResponseDto.builder()
-                .party(party)
-                .build();
+        Party party = Party.builder().ottType(requestDto.getOttType()).partyCreator(partyCreator).startDate(requestDto.getStartDate()).endDate(requestDto.getEndDate()).build();
+        PartyResponseDto responseDto = PartyResponseDto.builder().party(party).build();
 
         partyRepository.save(party);
         return responseDto;
@@ -95,9 +91,7 @@ public class PartyService {
         if (party.isFull()) {
             throw new RuntimeException("This party is already full.");
         }
-        if (user.getParties().stream().anyMatch(partyUser -> partyUser.getParty().getOttType() == party.getOttType()
-                && partyUser.getParty().getEndDate().isAfter(party.getStartDate())
-                && partyUser.getParty().getStartDate().isBefore(party.getEndDate()))) {
+        if (user.getParties().stream().anyMatch(partyUser -> partyUser.getParty().getOttType() == party.getOttType() && partyUser.getParty().getEndDate().isAfter(party.getStartDate()) && partyUser.getParty().getStartDate().isBefore(party.getEndDate()))) {
             throw new RuntimeException("User already joined the party with same OTT and overlapping party period.");
         }
         PartyUser partyUser = new PartyUser();
@@ -144,7 +138,6 @@ public class PartyService {
     }
 
     private PartyResponseDto mapPartyToResponseDto(Party party) {
-
         return PartyResponseDto.builder().party(party).build();
     }
 
