@@ -3,6 +3,7 @@ package com.example.MM.api.entity.user;
 import com.example.MM.oauth.entity.ProviderType;
 import com.example.MM.oauth.entity.RoleType;
 import com.example.MM.party.entity.PartyUser;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.sun.istack.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,7 +18,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Getter
-@Setter
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 @Entity
@@ -34,7 +34,7 @@ public class User {
     @Size(max = 64)
     private String userId;
 
-    @Column(name = "USERNAME", length = 100)
+    @Column(name = "USERNAME", length = 100, unique = true)
     @NotNull
     @Size(max = 100)
     private String username;
@@ -78,7 +78,8 @@ public class User {
     @NotNull
     private LocalDateTime modifiedAt;
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(fetch = FetchType.LAZY , mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<PartyUser> parties = new HashSet<>();
 
     public User(
@@ -102,6 +103,14 @@ public class User {
         this.roleType = roleType;
         this.createdAt = createdAt;
         this.modifiedAt = modifiedAt;
+    }
+
+    public void updateUsername(String username){
+        this.username = username;
+    }
+
+    public void updateProfileImg(String profileImageUrl){
+        this.profileImageUrl = profileImageUrl;
     }
 
     public void addParty(PartyUser partyUser) {

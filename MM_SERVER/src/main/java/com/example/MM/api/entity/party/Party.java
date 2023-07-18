@@ -4,13 +4,14 @@ import com.example.MM.api.entity.user.User;
 import com.example.MM.party.entity.OttType;
 import com.example.MM.party.entity.PartyStatus;
 import com.example.MM.party.entity.PartyUser;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import javax.servlet.http.Part;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -19,6 +20,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "party")
 public class Party {
 
@@ -51,7 +53,8 @@ public class Party {
     @Column(name = "status")
     private PartyStatus status;
 
-    @OneToMany(mappedBy = "party", orphanRemoval = true, cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany( fetch = FetchType.LAZY, mappedBy = "party", orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<PartyUser> partyUsers;
 
     @Builder
@@ -66,29 +69,34 @@ public class Party {
 
     }
 
+    @PrePersist
+    @PreUpdate
+    public void updateStatusIfEndDatePassed(){
+        if(isBeforeStart()){
+            status = PartyStatus.COMPLETED;
+        }
+    }
+
     public boolean isFull() {
         return this.partyUsers.size() >= this.maxUsers;
     }
 
     public boolean isBeforeStart() {
-        return this.startDate.isAfter(LocalDate.now());
+        return this.startDate.isBefore(LocalDate.now());
     }
 
     public boolean isAfterEnd() {
-        return this.endDate.isBefore(LocalDate.now());
+        return this.endDate.isAfter(LocalDate.now());
     }
 
     public boolean isOngoing() {
         return !isBeforeStart() && !isAfterEnd() && !isFull();
     }
 
-    public boolean addUser(User user) {
-        if (isOngoing() && !isFull() && !userAlreadyJoined(user)) {
-            PartyUser partyUser = new PartyUser(this, user);
+    public void addUser(PartyUser partyUser) {
+        if (isOngoing() && !isFull() && !userAlreadyJoined(partyUser.getUser())) {
             partyUsers.add(partyUser);
-            return true;
         }
-        return false;
     }
 
     public void updateStatus(PartyStatus status) {
@@ -96,19 +104,16 @@ public class Party {
     }
 
     public void removeUser(PartyUser partyUser) {
-        partyUsers.remove(partyUser);
+        this.partyUsers.remove(partyUser);
     }
 
     public boolean userAlreadyJoined(User user) {
         for (PartyUser partyUser : partyUsers) {
             if (partyUser.getUser().getUserId().equals(user.getUserId())) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
-    public int getNumOfUsers() {
-        return this.partyUsers.size();
-    }
 }

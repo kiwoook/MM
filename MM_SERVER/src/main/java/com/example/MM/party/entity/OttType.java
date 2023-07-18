@@ -16,16 +16,19 @@ public enum OttType {
     //7. 애플 티비
     //8. 라프텔
 
-    WAVVE("WAVVE", 4, 9900),
-    TVING("TVING", 4, 9900),
-    COUPANG_PLAY("COUPANG_PLAY", 4, 7900),
-    WATCHA("WATCHA", 4, 7900),
-    NETFLIX("NETFLIX", 4, 13900),
-    DISNEY_PLUS("DISNEY_PLUS", 4, 8900),
-    APPLE_TV("APPLE_TV", 6, 4900),
-    RAFTEL("RAFTEL", 4, 10900);
+    WAVVE("WAVVE", "웨이브", 4, 9900),
+    TVING("TVING", "티빙", 4, 9900),
+    COUPANG_PLAY("COUPANG_PLAY", "쿠팡 플레이" , 4, 7900),
+    WATCHA("WATCHA", "왓챠", 4, 7900),
+    NETFLIX("NETFLIX", "넷플릭스", 4, 13900),
+    DISNEY_PLUS("DISNEY_PLUS", "디즈니 플러스",4, 8900),
+    APPLE_TV("APPLE_TV", "애플 티비", 6, 4900),
+    RAFTEL("RAFTEL", "라프텔", 4, 10900);
 
     private final String name;
+    private final String korean;
     private final Integer maxUsers;
     private final Integer price;
+
+
 }

@@ -11,4 +11,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 유저_SEQ 로 유저 정보를 파악
     User findByUserSeq(Long userSeq);
 
+    boolean existsByUsername(String username);
+
 }

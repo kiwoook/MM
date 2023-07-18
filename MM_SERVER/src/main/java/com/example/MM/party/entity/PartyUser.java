@@ -2,19 +2,21 @@ package com.example.MM.party.entity;
 
 import com.example.MM.api.entity.party.Party;
 import com.example.MM.api.entity.user.User;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.domain.Persistable;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @Getter
-@Setter
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "party_user")
-public class PartyUser{
+public class PartyUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,7 +31,7 @@ public class PartyUser{
     private User user;
 
     @CreatedDate
-    private LocalDate created;
+    private LocalDateTime created;
 
     @Builder
     public PartyUser(Party party, User user) {

@@ -1,6 +1,7 @@
 package com.example.MM.api.controller.party;
 
 import com.example.MM.api.service.PartyService;
+import com.example.MM.party.dto.OttTypeResponseDto;
 import com.example.MM.party.dto.PartyRequestDto;
 import com.example.MM.party.dto.PartyResponseDto;
 import com.example.MM.party.entity.OttType;
@@ -16,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -24,11 +26,10 @@ import java.util.List;
 @Slf4j
 public class PartyController {
 
+    final static Logger logger = LogManager.getLogger(PartyController.class);
     private final PartyService partyService;
 
-    final static Logger logger = LogManager.getLogger(PartyController.class);
-
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<List<PartyResponseDto>> getAllParties() {
         List<PartyResponseDto> parties = partyService.getAll();
         if (parties.isEmpty()) {
@@ -37,20 +38,6 @@ public class PartyController {
             return ResponseEntity.status(HttpStatus.OK).body(parties);
         }
     }
-
-    @GetMapping("/search")
-    public ResponseEntity<List<PartyResponseDto>> searchParty(
-            @RequestParam("ottType") OttType ottType,
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate endDate) {
-        try {
-            List<PartyResponseDto> parties = partyService.searchParty(ottType, startDate, endDate);
-            return ResponseEntity.status(HttpStatus.OK).body(parties);
-        } catch (PartyNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
 
     @PostMapping
     public ResponseEntity<PartyResponseDto> createParty(@RequestBody PartyRequestDto requestDto) {
@@ -66,6 +53,32 @@ public class PartyController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
+
+    @GetMapping("/ott")
+    public List<OttTypeResponseDto> infoOtt() {
+        List<OttTypeResponseDto> ottTypes = new ArrayList<>();
+        for (OttType ottType : OttType.values()) {
+            ottTypes.add(new OttTypeResponseDto(ottType.getName(), ottType.getKorean(), ottType.getMaxUsers(), ottType.getPrice()));
+        }
+        return ottTypes;
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<PartyResponseDto>> searchParty(
+            @RequestParam("ottType") OttType ottType,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate endDate) {
+        if ((startDate == null) != (endDate == null)) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            List<PartyResponseDto> parties = partyService.searchParty(ottType, startDate, endDate);
+            return ResponseEntity.status(HttpStatus.OK).body(parties);
+        } catch (PartyNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 
     @GetMapping("/{partyId}")
     public ResponseEntity<PartyResponseDto> getParty(@PathVariable Long partyId) {
@@ -115,12 +128,28 @@ public class PartyController {
         try {
             partyService.leaveParty(userId, partyId);
             return ResponseEntity.noContent().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch (RuntimeException e) {
+        } catch (PartyNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 
     //유저가 가입한 파티들을 불러오는 컨트롤러 만들기
+    @GetMapping("/myparty")
+    public ResponseEntity<List<PartyResponseDto>> myParty() {
+        org.springframework.security.core.userdetails.User principal = (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = principal.getUsername();
+
+        try {
+            List<PartyResponseDto> partyResponseDtoList = partyService.myParty(userId);
+            return ResponseEntity.ok().body(partyResponseDtoList);
+        } catch (PartyNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+
+    }
 }

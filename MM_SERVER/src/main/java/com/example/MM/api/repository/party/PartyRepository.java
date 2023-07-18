@@ -14,7 +14,8 @@ public interface PartyRepository extends JpaRepository<Party, Long> {
     List<Party> findByOttTypeAndStartDateBetweenAndEndDateBetween(OttType ottType, LocalDate startDate1, LocalDate startDate2, LocalDate endDate1, LocalDate endDate2);
 
     List<Party> findByOttTypeAndStartDateGreaterThanEqualAndEndDateLessThanEqual(OttType ottType, LocalDate startDate, LocalDate endDate);
-//    List<Party> findByStartDateGreaterThanEqualAndEndDateLessThanEqual(LocalDate startDate, LocalDate endDate);
+    List<Party> findByOttType(OttType ottType);
+    //    List<Party> findByStartDateGreaterThanEqualAndEndDateLessThanEqual(LocalDate startDate, LocalDate endDate);
 //
 //    List<Party> findByPartyUsersContains(PartyUser user);
 //

@@ -79,11 +79,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private User updateUser(User user, OAuth2UserInfo userInfo) {
         if (userInfo.getName() != null && !user.getUsername().equals(userInfo.getName())) {
-            user.setUsername(userInfo.getName());
+            user.updateUsername(userInfo.getName());
         }
 
         if (userInfo.getImageUrl() != null && !user.getProfileImageUrl().equals(userInfo.getImageUrl())) {
-            user.setProfileImageUrl(userInfo.getImageUrl());
+            user.updateProfileImg(userInfo.getImageUrl());
         }
 
         return user;
